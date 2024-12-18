@@ -1,0 +1,71 @@
+name: jar_build
+
+on:
+  pull_request:
+
+env:
+  # 本当は github secrets に設定するべきだけど権限がないのでそのまま記述
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_DB: tabisketch
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  MAIL_USERNAME: test
+  MAIL_PASSWORD: test
+  GOOGLE_MAPS_API_KEY: dummy
+
+jobs:
+  jar_build:
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        runner: [ubuntu-latest]
+        java: [21]
+    name: Build on Java ${{ matrix.java }} ${{ matrix.runner }}
+
+    # postgresのコンテナを起動
+    services:
+      postgres:
+        image: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+
+    steps:
+      # ソースコードのチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Javaのセットアップ
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: ${{ matrix.java }}
+
+      # データベースの初期化
+      - name: Initialize database
+        env:
+          PGHOST: ${{ env.POSTGRES_HOST }}
+          PGPORT: ${{ env.POSTGRES_PORT }}
+          PGDATABASE: ${{ env.POSTGRES_DB }}
+          PGUSER: ${{ env.POSTGRES_USER }}
+          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: ./bin/init_db.sh
+
+      # JARパッケージのビルドとテストの実行
+      - name: Build JAR package
+        env:
+          DATABASE_URL: "jdbc:postgresql://${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}"
+          DATABASE_USERNAME: ${{ env.POSTGRES_USER }}
+          DATABASE_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: ./mvnw package
