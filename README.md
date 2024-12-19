@@ -36,6 +36,8 @@ GOOGLE_MAPS_API_KEY GoogleMapのAPIキー
 
 ## コンテナを使って実行するライフサイクル
 
+`.env.example` をコピーして `.env` を作成する
+
 ```bash
 # コンテナをビルドする
 npm run docker:build
