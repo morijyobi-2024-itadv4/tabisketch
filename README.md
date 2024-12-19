@@ -32,3 +32,18 @@ GOOGLE_MAPS_API_KEY GoogleMapのAPIキー
 - TailwindCSSBuild ... TailwindCSS のビルドを行う
 - CreateTables.run ... テーブルを作成する
 - DropTables.run ... テーブルを削除する
+
+
+## コンテナを使って実行するライフサイクル
+
+```bash
+# コンテナをビルドする
+npm run docker:build
+
+# コンテナでDBとJARを起動する
+npm run docker:up
+# Ctrl + C で停止する
+
+# コンテナを削除する
+npm run docker:down
+```
